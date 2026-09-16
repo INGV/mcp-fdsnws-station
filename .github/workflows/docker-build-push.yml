@@ -1,0 +1,143 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    # develop is the integration branch, so a PR targeting it is built too.
+    # Pull-request builds never push (see the `push:` conditions below).
+    branches:
+      - main
+      - develop
+
+env:
+  DOCKER_IMAGE: ingv/mcp-fdsnws-station
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to Docker Hub
+        if: github.event_name != 'pull_request'
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Retry with backoff: auth.docker.io occasionally times out.
+          for ATTEMPT in 1 2 3 4 5; do
+            if echo "${DOCKER_HUB_ACCESS_TOKEN}" \
+              | docker login -u "${DOCKER_HUB_USERNAME}" --password-stdin; then
+              echo "Docker Hub login OK (attempt ${ATTEMPT})"
+              exit 0
+            fi
+            echo "Login attempt ${ATTEMPT} failed; retrying in $((ATTEMPT * 10))s..."
+            sleep $((ATTEMPT * 10))
+          done
+          echo "Docker Hub login failed after 5 attempts" >&2
+          exit 1
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.DOCKER_IMAGE }}
+          # latest=auto -> the `latest` tag is added only on semver tag builds,
+          # never on plain `main` pushes.
+          flavor: |
+            latest=auto
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+
+      - name: Build and push
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: ./Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  retention:
+    runs-on: ubuntu-latest
+    needs: build
+    # Only prune on version tag builds, after the image is published.
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Keep only the latest 5 semver versions on Docker Hub
+        env:
+          DOCKER_HUB_USERNAME: ${{ secrets.DOCKER_HUB_USERNAME }}
+          DOCKER_HUB_ACCESS_TOKEN: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          DOCKER_IMAGE: ${{ env.DOCKER_IMAGE }}
+          KEEP: "5"
+        run: |
+          set -euo pipefail
+
+          # Authenticate to the Docker Hub API (token must have delete scope).
+          TOKEN=$(curl -fsSL -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"username\":\"${DOCKER_HUB_USERNAME}\",\"password\":\"${DOCKER_HUB_ACCESS_TOKEN}\"}" \
+            https://hub.docker.com/v2/users/login/ | jq -r '.token')
+
+          # Collect every tag in the repository (paginated).
+          ALL_TAGS=""
+          URL="https://hub.docker.com/v2/repositories/${DOCKER_IMAGE}/tags?page_size=100"
+          while [ -n "${URL}" ] && [ "${URL}" != "null" ]; do
+            RESP=$(curl -fsSL -H "Authorization: JWT ${TOKEN}" "${URL}")
+            ALL_TAGS="${ALL_TAGS}"$'\n'"$(echo "${RESP}" | jq -r '.results[].name')"
+            URL=$(echo "${RESP}" | jq -r '.next')
+          done
+
+          # Semver versions only (X.Y.Z), oldest first.
+          VERSIONS=$(echo "${ALL_TAGS}" | grep -E '^[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | uniq || true)
+          TOTAL=$(echo "${VERSIONS}" | grep -c . || true)
+          DELETE_COUNT=$(( TOTAL - KEEP ))
+
+          echo "Found ${TOTAL} semver versions; keeping ${KEEP}."
+          if [ "${DELETE_COUNT}" -le 0 ]; then
+            echo "Nothing to prune."
+            exit 0
+          fi
+
+          for VERSION in $(echo "${VERSIONS}" | head -n "${DELETE_COUNT}"); do
+            echo "Deleting ${DOCKER_IMAGE}:${VERSION}"
+            curl -fsSL -X DELETE \
+              -H "Authorization: JWT ${TOKEN}" \
+              "https://hub.docker.com/v2/repositories/${DOCKER_IMAGE}/tags/${VERSION}/"
+          done
+
+  dockerhub-description:
+    runs-on: ubuntu-latest
+    needs: build
+    # Sync the README to the Docker Hub repository page on main pushes only.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Update Docker Hub description
+        uses: peter-evans/dockerhub-description@v5
+        with:
+          username: ${{ secrets.DOCKER_HUB_USERNAME }}
+          password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
+          repository: ${{ env.DOCKER_IMAGE }}
+          short-description: "MCP server for the FDSN fdsnws-station 1.1 service (multi-datacenter)"
+          readme-filepath: ./README.md

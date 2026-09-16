@@ -1,0 +1,15 @@
+Error 400: Bad request
+
+Syntax Error in Request
+
+
+
+Usage details are available from /fdsnws/station/1/
+
+Request:
+
+/fdsnws/station/1/query?format=text&level=station&network=IV&starttime=2030-01-01&endtime=2020-01-01
+
+Request Submitted: 2026-09-16T17:22:43.317Z
+
+Service version: 1.1.64

@@ -1,0 +1,3 @@
+#Network|Station|Latitude|Longitude|Elevation|SiteName|StartTime|EndTime
+GE|APE|37.0689|25.5306|620.0|GEOFON Station Apeiranthos, Naxos, Greece|2000-07-18T00:00:00|2008-05-01T00:00:00
+GE|APE|37.07274|25.52301|608.0|NOA/GEOFON Station Apeiranthos, Naxos, Greece|2008-05-02T00:00:00|

@@ -1,0 +1,61 @@
+[build-system]
+requires = ["uv_build>=0.8,<1"]
+build-backend = "uv_build"
+
+[project]
+name = "mcp-fdsnws-station-server"
+version = "1.0.0-dev"
+description = "MCP server for the FDSN fdsnws-station 1.1 service (multi-datacenter)"
+readme = "README.md"
+license = "AGPL-3.0-or-later"
+authors = [
+    {name = "Valentino Lauciani", email = "valentino.lauciani@ingv.it"}
+]
+# 3.11 is what the Docker image ships and what CI tests first. The code uses
+# PEP 604 unions in runtime-evaluated annotations, which mcp 2.x also requires.
+requires-python = ">=3.11"
+dependencies = [
+    # mcp 2.x implements protocol revision 2026-07-28 (MCPServer, cache hints,
+    # typed outputSchema); the whole server is written against that API.
+    "mcp>=2,<3",
+    "obspy>=1.4.2,<2",
+    "pydantic>=2,<3",
+    "requests>=2.31,<3",
+]
+classifiers = [
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+[project.urls]
+Homepage = "https://github.com/INGV/mcp-fdsnws-station"
+Repository = "https://github.com/INGV/mcp-fdsnws-station"
+
+[project.scripts]
+mcp-fdsnws-station-server = "fdsnws_station_server.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.uv.build-backend]
+module-name = "fdsnws_station_server"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: tests that hit live FDSN datacenters (network required; opt-in)",
+]
+# Offline by default: the live suite is opt-in with `pytest -m integration` and
+# never runs in CI, to keep load off third-party services.
+addopts = "-m 'not integration'"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W", "UP", "B"]

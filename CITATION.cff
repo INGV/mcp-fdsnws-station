@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "mcp-fdsnws-station: FDSNWS Station MCP Server"
+abstract: >-
+  An MCP (Model Context Protocol) server that exposes the FDSN Web Service
+  Station (fdsnws-station 1.1) metadata of any FDSN-compliant datacenter
+  (INGV, EarthScope, GFZ, ORFEUS, or a private intranet service) to MCP
+  clients as typed network, station, channel and response objects.
+type: software
+authors:
+  - family-names: Lauciani
+    given-names: Valentino
+    email: valentino.lauciani@ingv.it
+    orcid: "https://orcid.org/0000-0002-9672-7428"
+    affiliation: "Istituto Nazionale di Geofisica e Vulcanologia (INGV)"
+repository-code: "https://github.com/INGV/mcp-fdsnws-station"
+url: "https://github.com/INGV/mcp-fdsnws-station"
+license: AGPL-3.0-or-later
+keywords:
+  - model context protocol
+  - mcp
+  - fdsnws
+  - station metadata
+  - stationxml
+  - seismology
+  - obspy

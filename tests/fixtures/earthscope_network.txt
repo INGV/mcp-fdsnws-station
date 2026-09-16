@@ -1,0 +1,2 @@
+#Network | Description | StartTime | EndTime | TotalStations
+IU|Global Seismograph Network (GSN - IRIS/USGS)|1988-01-01T00:00:00.0000||116

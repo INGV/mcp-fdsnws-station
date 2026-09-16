@@ -1,0 +1,53 @@
+# This repository adheres to the publiccode.yml standard by including this
+# metadata file that makes public software easily discoverable.
+# More info at https://github.com/publiccodeyml/publiccode.yml
+
+publiccodeYmlVersion: "0"
+name: "INGV - FDSNWS Station MCP Server"
+releaseDate: 2026-09-16
+url: "https://github.com/INGV/mcp-fdsnws-station"
+landingURL: "https://github.com/INGV/mcp-fdsnws-station"
+softwareVersion: v1.0.0-dev
+developmentStatus: development
+softwareType: standalone/backend
+platforms:
+  - windows
+  - mac
+  - linux
+usedBy:
+  - INGV
+categories:
+  - data-analytics
+maintenance:
+  type: internal
+  contacts:
+    - name: Valentino Lauciani
+      email: valentino.lauciani@ingv.it
+legal:
+  license: "AGPL-3.0-or-later"
+intendedAudience:
+  scope:
+    - research
+localisation:
+  localisationReady: false
+  availableLanguages:
+    - en
+organisation:
+  name: "Istituto Nazionale di Geofisica e Vulcanologia - INGV"
+  uri: "urn:x-italian-pa:ingv"
+description:
+  en:
+    shortDescription: >-
+      MCP server exposing FDSN Web Service Station metadata (networks,
+      stations, channels, instrument responses) of any FDSN datacenter.
+    documentation: "https://github.com/INGV/mcp-fdsnws-station/blob/main/README.md"
+    longDescription: >
+      An MCP (Model Context Protocol) server for the FDSN Web Service Station API (fdsnws-station 1.1). It exposes network, station, channel and instrument-response metadata of any FDSN-compliant datacenter (INGV, EarthScope, GFZ, ORFEUS, or a private service configured by name) to MCP clients such as Claude Desktop and Open WebUI.
+
+      The server runs on the mcp 2.x SDK, speaks stdio by default and Streamable HTTP on request, and returns typed objects with a real output schema. Results are sorted and paginated by the server with an exact total count, so a query never floods the client's context.
+    localisedName: "FDSNWS Station MCP Server"
+    features:
+      - FDSN Web Service Station query (network, station, channel levels)
+      - Instrument response from StationXML through ObsPy
+      - Multi-datacenter access by name, including private intranet services
+      - Model Context Protocol (MCP) server, stdio and Streamable HTTP

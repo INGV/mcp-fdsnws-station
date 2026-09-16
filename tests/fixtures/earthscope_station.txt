@@ -1,0 +1,4 @@
+#Network | Station | Latitude | Longitude | Elevation | SiteName | StartTime | EndTime 
+IU|ANMO|34.9459|-106.4572|1850.0|Albuquerque, New Mexico, USA|1989-08-29T00:00:00.0000|2000-10-19T16:00:00.0000
+IU|ANMO|34.9502|-106.4602|1839.0|Albuquerque, New Mexico, USA|2000-10-19T16:00:00.0000|2002-11-19T21:07:00.0000
+IU|ANMO|34.94591|-106.4572|1820.0|Albuquerque, New Mexico, USA|2002-11-19T21:07:00.0000|
