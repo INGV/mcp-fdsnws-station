@@ -1,6 +1,7 @@
 # Release Notes
 
-### Release 1.0.0-dev (2026-09-16)
+### Release 1.0.0-dev (2026-09-17)
+  - fix: raise the per-field bound on `network`, `station`, `location` and `channel` selections from 64 to 1024 characters; a list of 21 station codes was rejected before reaching the datacenter, while INGV accepts GET URLs up to 8 KiB (about 1580 codes, measured live)
   - Initial implementation: MCP server for the FDSN fdsnws-station 1.1 service on the `mcp` 2.x SDK (protocol revision 2026-07-28), with server identity, instructions, a public one-hour cache hint on the tool list, and read-only tool annotations
   - feat: four tools, one per level. `fdsnws_station_query_networks`, `fdsnws_station_query_stations` and `fdsnws_station_query_channels` fetch `format=text` and return typed Epoch objects with units in the field names (`elevation_m`, `depth_m`, `azimuth_deg`, `dip_deg`, `scale_frequency_hz`, `sample_rate_hz`) and a real `outputSchema`; `fdsnws_station_get_response` returns the full instrument response of one exact channel as a JSON tree of the ObsPy `Inventory`
   - feat: server-side ordering and pagination (`limit` default 50, max 500; 0-based `offset`; exact `total_count`, `has_more`, `next_offset`), since the FDSN service has none

@@ -24,10 +24,14 @@ from pydantic import AfterValidator, BaseModel, Field
 # --- Input constraints -------------------------------------------------------
 
 # Everything the specification allows in a code selection: comma lists, `*` and
-# `?` wildcards, and `--` for a blank Location code. The bound also keeps the
-# value safe to interpolate into the upstream query string.
+# `?` wildcards, and `--` for a blank Location code. The pattern is what keeps
+# the value safe to interpolate into the upstream query string; the bound only
+# keeps the GET URL short. Measured live on INGV (2026-09-17): the request line
+# is capped at 8 KiB by both the backend (431) and nginx (414), so about 1580
+# station codes fit. 1024 per code field leaves the four fields plus every
+# other parameter under that cap and covers about 200 stations per call.
 CODE_PATTERN = r"^[A-Za-z0-9*?,-]+$"
-CODE_MAX_LENGTH = 64
+CODE_MAX_LENGTH = 1024
 
 # Exact codes for `get_response`: one Network, one Station, one Channel, no list
 # and no wildcard, so the returned Inventory is bounded (a `*` at response level

@@ -16,12 +16,19 @@ from fdsnws_station_server.models import (
 )
 
 
-@pytest.mark.parametrize("value", ["IV", "IV,GE", "I*", "H??", "--", "A-B", "a" * 64])
+@pytest.mark.parametrize("value", ["IV", "IV,GE", "I*", "H??", "--", "A-B", "a" * 1024])
 def test_code_accepts_specification_forms(value):
     assert TypeAdapter(Code).validate_python(value) == value
 
 
-@pytest.mark.parametrize("value", ["", "IV GE", "IV;GE", "a" * 65, "IV|GE", "x/y"])
+def test_code_accepts_a_long_station_list():
+    # Regression: 21 codes (102 characters) were rejected by the old 64 bound
+    # before the request ever reached the datacenter, which accepts far more.
+    value = ",".join(["ESCV", "EPZF", "ECHR", "ESVO", "EMSG", "ESML", "EMCO"] * 3)
+    assert TypeAdapter(Code).validate_python(value) == value
+
+
+@pytest.mark.parametrize("value", ["", "IV GE", "IV;GE", "a" * 1025, "IV|GE", "x/y"])
 def test_code_rejects_unsafe_forms(value):
     with pytest.raises(ValidationError):
         TypeAdapter(Code).validate_python(value)
