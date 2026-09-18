@@ -2,12 +2,12 @@
 """FDSNWS Station MCP Server: FDSN station metadata from any fdsnws-station 1.1 Datacenter.
 
 Four tools, one per Level: three text-level queries with server-side paging
-(ADR-0001) and one response-level fetch through StationXML (ADR-0003). Every
-tool returns exactly one Pydantic model, so the SDK advertises a real
-`outputSchema` and an upstream failure travels in-band as `error`.
+and one response-level fetch through StationXML. Every tool returns exactly
+one Pydantic model, so the SDK advertises a real `outputSchema` and an
+upstream failure travels in-band as `error`.
 
-Transport is chosen by `MCP_TRANSPORT` (ADR-0002): stdio by default, Streamable
-HTTP without a proxy otherwise.
+Transport is chosen by `MCP_TRANSPORT`: stdio by default, Streamable HTTP
+without a proxy otherwise.
 """
 
 import logging

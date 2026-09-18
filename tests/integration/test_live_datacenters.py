@@ -79,7 +79,7 @@ def test_no_data_is_empty_not_error(datacenter):
 
 
 def test_ingv_whole_network_at_channel_level_is_thousands_of_epochs():
-    """The reason for ADR-0001: the full result is downloaded and paged here."""
+    """The reason for client-side paging: the full result is downloaded and paged here."""
     epochs, _, _ = run(query_text("channel", {"network": "IV"}, "INGV"))
     assert len(epochs) > 5000
 

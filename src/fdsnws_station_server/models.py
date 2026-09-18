@@ -229,7 +229,11 @@ class ChannelEpoch(BaseModel):
 
 
 class Pagination(BaseModel):
-    """Client-side paging over the complete, sorted result (ADR-0001)."""
+    """Client-side paging over the complete, sorted result.
+
+    The specification has no `limit`/`offset`/`orderby`, so the page is cut
+    here after the whole response has been downloaded and sorted.
+    """
 
     total_count: int = Field(description="Epochs matched by the Datacenter, before slicing")
     returned_count: int = Field(description="Epochs in this page")
