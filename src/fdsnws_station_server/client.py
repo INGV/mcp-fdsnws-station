@@ -307,6 +307,17 @@ async def get_response(
         if status == 404:
             return Inventory(), api_url
         raise DatacenterRequestError(str(e).strip(), status=status, api_url=api_url) from e
+    except Exception as e:  # noqa: BLE001
+        # Not everything ObsPy raises is an FDSNException: lxml raises
+        # XMLSyntaxError on a 200 whose body is truncated or empty StationXML,
+        # and Client() raises ValueError when the host does not answer at all.
+        # Only ObsPy runs inside fetch(), so a broad catch here masks none of
+        # our own bugs, and it turns a hidden "Error executing tool" into the
+        # same in-band error the text path reports for an unparseable body.
+        raise DatacenterRequestError(
+            f"Unparseable or unreachable Datacenter: {type(e).__name__}: {e}".strip(),
+            api_url=api_url,
+        ) from e
     return inventory, api_url
 
 

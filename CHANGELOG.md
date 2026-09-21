@@ -1,6 +1,7 @@
 # Release Notes
 
-### Release 1.0.0-dev (2026-09-18)
+### Release 1.0.0-dev (2026-09-21)
+  - fix: a non-FDSN exception on the response path (lxml `XMLSyntaxError` on a truncated or empty StationXML body, ObsPy `ValueError` on an unreachable host) is folded into the in-band `error` block, as the unparseable-text case already was; before, it reached the client as the SDK's hidden `Error executing tool`
   - docs: replace references to unversioned ADR and design-document numbers in code comments and docstrings with the rationale stated inline
   - fix: raise the per-field bound on `network`, `station`, `location` and `channel` selections from 64 to 1024 characters; a list of 21 station codes was rejected before reaching the datacenter, while INGV accepts GET URLs up to 8 KiB (about 1580 codes, measured live)
   - Initial implementation: MCP server for the FDSN fdsnws-station 1.1 service on the `mcp` 2.x SDK (protocol revision 2026-07-28), with server identity, instructions, a public one-hour cache hint on the tool list, and read-only tool annotations

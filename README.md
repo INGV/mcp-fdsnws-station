@@ -223,9 +223,9 @@ found), `error` and `message`.
 
 ### Errors and empty results
 
-An upstream failure (HTTP 4xx/5xx, a network error, or a 200 whose body is not the
-FDSN text format, such as an HTML page from a misconfigured private service) is
-**not** a protocol error: the tool result carries `error: {status, message}` with
+An upstream failure (HTTP 4xx/5xx, a network error, an unreachable host, or a 200
+whose body is not the FDSN text format or not well-formed StationXML, such as an
+HTML page from a misconfigured private service) is **not** a protocol error: the tool result carries `error: {status, message}` with
 the datacenter's response body verbatim, and `pagination` is `null`. A query that matches nothing is not an
 error either: `total_count` is `0` and `message` says so. Invalid input (a wildcard
 in `get_response`, a bounding box together with a radial search, a malformed time,

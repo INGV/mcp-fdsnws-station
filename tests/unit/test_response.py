@@ -151,3 +151,37 @@ def test_get_response_unknown_status_is_carried():
         with pytest.raises(DatacenterRequestError) as ei:
             run(get_response("IV", "ACER", "*", "HHZ", None, None, "INGV"))
     assert ei.value.status == 502 and "Bad Gateway" in ei.value.message
+
+
+def test_get_response_malformed_stationxml_is_an_in_band_error():
+    """lxml raises XMLSyntaxError, not FDSNException, on a 200 with a truncated
+    body (a misconfigured private service, say); it must not escape as a crash."""
+    from lxml.etree import XMLSyntaxError
+
+    class FakeClient:
+        def __init__(self, base_url, timeout):
+            pass
+
+        def get_stations(self, **kwargs):
+            raise XMLSyntaxError("Premature end of data in tag Network line 1", None, 1, 99)
+
+    with patch.object(client, "Client", FakeClient):
+        with pytest.raises(DatacenterRequestError) as ei:
+            run(get_response("IV", "ACER", "*", "HHZ", None, None, "INGV"))
+    assert ei.value.status is None
+    assert "XMLSyntaxError" in ei.value.message and "Premature end" in ei.value.message
+
+
+def test_get_response_unreachable_host_is_an_in_band_error():
+    """ObsPy's Client() probes the base URL and raises a bare ValueError when
+    nothing answers; the tool result must still be a readable error."""
+
+    class FakeClient:
+        def __init__(self, base_url, timeout):
+            raise ValueError(f"The FDSN service base URL `{base_url}` is not a valid URL.")
+
+    with patch.object(client, "Client", FakeClient):
+        with pytest.raises(DatacenterRequestError) as ei:
+            run(get_response("IV", "ACER", "*", "HHZ", None, None, "INGV"))
+    assert ei.value.status is None
+    assert "ValueError" in ei.value.message and "not a valid URL" in ei.value.message
