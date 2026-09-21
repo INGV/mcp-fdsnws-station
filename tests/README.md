@@ -36,6 +36,7 @@ absorbs only exist in real output.
 | `ingv_station_iv_a.txt` | `IV.A*` at station level | 36 Epochs for sort and slice tests |
 | `ingv_bad_window.error.txt` | `IV` with `starttime` after `endtime` | INGV's verbatim HTTP 400 body |
 | `ingv_iv_acer_hhz_response.xml` | `IV.ACER.*.HHZ` at response level | StationXML with three Channel Epochs and full response stages |
+| `gfz_ge_ape_bhz_response.xml`, `orfeus_nl_hgn_bhz_response.xml`, `earthscope_iu_anmo_bhz_response.xml` | one `BHZ` Epoch of `GE.APE`, `NL.HGN.02`, `IU.ANMO.00`, window 2024-01-01/02, captured 2026-09-21 | StationXML from the other three advertised Datacenters: units spelled `M/S`/`COUNTS`, `m/s`/`COUNTS`, `m/s`/`counts`; 5, 2 and 3 response stages |
 
 ## Conventions
 
