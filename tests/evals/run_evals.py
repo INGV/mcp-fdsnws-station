@@ -88,6 +88,7 @@ def chat(endpoint: str, model: str, messages: list, tools: list, timeout: int) -
 async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout: int) -> dict:
     messages = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": q["question"]}]
     calls, rejected, tool_tokens, prompt_tokens, paged = 0, 0, 0, 0, False
+    calls_made: list[dict] = []
     t0 = time.monotonic()
     answer = ""
     while True:
@@ -109,6 +110,7 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
             if args.get("offset", 0) or args.get("limit", 50) > 50:
                 paged = True
             text, is_error = await execute(fn["name"], args)
+            calls_made.append({"tool": fn["name"], "arguments": args, "is_error": is_error})
             rejected += int(is_error)
             tool_tokens += len(ENC.encode(text))
             messages.append({"role": "tool", "tool_call_id": tc.get("id", ""), "content": text})
@@ -120,6 +122,7 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
         "missing": missing,
         "forbidden": forbidden,
         "tool_calls": calls,
+        "calls": calls_made,
         "rejected_calls": rejected,
         "tool_result_tokens": tool_tokens,
         "prompt_tokens_reported": prompt_tokens,
@@ -153,7 +156,8 @@ async def main(a):
     json.dump(
         {
             "model": a.model,
-            "endpoint": a.endpoint,
+            # The host is deliberately not recorded: results are committed and public.
+            "endpoint": a.endpoint_label,
             "date": stamp,
             "system": SYSTEM,
             "max_calls": MAX_CALLS,
@@ -175,6 +179,11 @@ async def main(a):
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--endpoint", required=True)
+    ap.add_argument(
+        "--endpoint-label",
+        default="OpenAI-compatible endpoint (host not recorded)",
+        help="what to record in the results instead of the endpoint URL",
+    )
     ap.add_argument("--model", required=True)
     ap.add_argument("--questions", default="tests/evals/questions.json")
     ap.add_argument("--repeats", type=int, default=1)
