@@ -19,5 +19,7 @@ uv run --group evals python tests/evals/run_evals.py \
     --endpoint http://host:11434/v1 --model qwen3.8:27b --repeats 3 --out tests/evals/results
 ```
 
+`scoring.py` normalises Unicode dashes and spaces before regex matching, and
+`summarize.py` re-scores stored runs with it, so result files are the raw record.
 `results/` holds one JSON per run (every answer, every metric). The results used in
 the manuscript are committed; new runs add files, never overwrite them.

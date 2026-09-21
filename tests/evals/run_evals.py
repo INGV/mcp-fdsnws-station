@@ -26,7 +26,6 @@ and wall time. Never run in CI: it needs a model endpoint and the live Datacente
 import argparse
 import asyncio
 import json
-import re
 import sys
 import time
 from datetime import UTC, datetime
@@ -37,6 +36,9 @@ import tiktoken
 from mcp.server.mcpserver.exceptions import ToolError
 
 from fdsnws_station_server import server
+
+sys.path.insert(0, str(Path(__file__).parent))
+from scoring import score  # noqa: E402
 
 ENC = tiktoken.get_encoding("o200k_base")
 SYSTEM = (
@@ -111,8 +113,7 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
             tool_tokens += len(ENC.encode(text))
             messages.append({"role": "tool", "tool_call_id": tc.get("id", ""), "content": text})
     elapsed = time.monotonic() - t0
-    missing = [p for p in q["expect_all"] if not re.search(p, answer, re.I | re.S)]
-    forbidden = [p for p in q.get("expect_none", []) if re.search(p, answer, re.I | re.S)]
+    missing, forbidden = score(q, answer)
     return {
         "id": q["id"],
         "correct": not missing and not forbidden,

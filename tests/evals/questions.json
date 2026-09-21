@@ -30,7 +30,7 @@
   "id": "Q04",
   "question": "What was the total sensitivity (scale) of the HHZ channel of station IV.CAMP on 1 January 2020, and at which frequency is it valid?",
   "expect_all": [
-   "7\\.009?12\\s*[x\u00d7*]?\\s*10\\^?8|7\\.009?12e\\+?0?8|700,?912,?000",
+   "7\\.009?12\\s*[x\u00d7*]?\\s*10\\^?8|7\\.009?12e\\+?0?8|700[, ]?912[, ]?000",
    "21\\.2[45]"
   ]
  },
@@ -52,7 +52,7 @@
   "id": "Q07",
   "question": "Using the instrument response, give the instrument sensitivity value and its input and output units for the current HHZ channel of station IV.CAMP.",
   "expect_all": [
-   "2\\.3907\\s*[x\u00d7*]?\\s*10\\^?8|2\\.3907e\\+?0?8|239,?070,?000",
+   "2\\.3907\\s*[x\u00d7*]?\\s*10\\^?8|2\\.3907e\\+?0?8|239[, ]?070[, ]?000",
    "m/s",
    "count"
   ]
