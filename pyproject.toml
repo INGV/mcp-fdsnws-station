@@ -40,6 +40,11 @@ dev = [
     "pytest>=8",
     "ruff>=0.6",
 ]
+# Only for tests/evals: token counting of tool results and the agentic harness
+# against an OpenAI-compatible endpoint. Never needed by the server or CI.
+evals = [
+    "tiktoken>=0.8",
+]
 
 [tool.uv.build-backend]
 module-name = "fdsnws_station_server"

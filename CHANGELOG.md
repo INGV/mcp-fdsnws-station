@@ -1,6 +1,7 @@
 # Release Notes
 
 ### Release 1.0.0-dev (2026-09-21)
+  - test: `tests/evals/` with a context-cost measurement (bytes and tiktoken tokens per representation) and a task-based evaluation harness (13 verifiable questions, OpenAI-compatible endpoint, in-process tool calls); `evals` dependency group with `tiktoken`, never used by the server or CI
   - test: one response-level StationXML fixture per advertised Datacenter (GFZ, ORFEUS, EarthScope, alongside INGV), serialised offline through the production path, so the four-datacenter matrix is reproducible without network access at every level
   - fix: a non-FDSN exception on the response path (lxml `XMLSyntaxError` on a truncated or empty StationXML body, ObsPy `ValueError` on an unreachable host) is folded into the in-band `error` block, as the unparseable-text case already was; before, it reached the client as the SDK's hidden `Error executing tool`
   - docs: replace references to unversioned ADR and design-document numbers in code comments and docstrings with the rationale stated inline
