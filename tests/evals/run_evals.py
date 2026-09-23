@@ -98,7 +98,9 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
         except requests.RequestException as e:
             # A model that never finishes (gpt-oss has spun past 900 s on one
             # question) is a failed answer, not a reason to lose the other runs.
-            error = f"{type(e).__name__}: {e}"
+            # Only the exception type: its message names the host, which results
+            # never record.
+            error = type(e).__name__
             break
         prompt_tokens = max(prompt_tokens, reply.get("usage", {}).get("prompt_tokens", 0))
         msg = reply["choices"][0]["message"]
