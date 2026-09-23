@@ -91,8 +91,15 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
     calls_made: list[dict] = []
     t0 = time.monotonic()
     answer = ""
+    error = None
     while True:
-        reply = chat(endpoint, model, messages, tools, timeout)
+        try:
+            reply = chat(endpoint, model, messages, tools, timeout)
+        except requests.RequestException as e:
+            # A model that never finishes (gpt-oss has spun past 900 s on one
+            # question) is a failed answer, not a reason to lose the other runs.
+            error = f"{type(e).__name__}: {e}"
+            break
         prompt_tokens = max(prompt_tokens, reply.get("usage", {}).get("prompt_tokens", 0))
         msg = reply["choices"][0]["message"]
         tool_calls = msg.get("tool_calls") or []
@@ -130,6 +137,7 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
         "needs_paging": q.get("needs_paging", False),
         "seconds": round(elapsed, 1),
         "answer": answer,
+        "error": error,
     }
 
 
