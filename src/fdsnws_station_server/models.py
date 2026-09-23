@@ -19,6 +19,7 @@ the schema is the only place a client can read it from.
 from datetime import datetime
 from typing import Annotated, ClassVar, Literal
 
+import pydantic_core
 from pydantic import AfterValidator, BaseModel, Field
 
 # --- Input constraints -------------------------------------------------------
@@ -48,6 +49,15 @@ EXACT_CODE_PATTERN = r"^[A-Za-z0-9-]+$"
 # was about 122k tokens and overflowed a 32k window in an evaluation run.
 LIMIT_DEFAULT = 50
 LIMIT_MAX = 70
+
+# `get_response` has no page to shrink: one exact channel returns every Epoch it
+# ever had, each with its full stage list. The response tree tokenizes at 2.79
+# bytes per token on qwen3.8:27b (same calibration), so 54000 bytes is about 19k
+# tokens, 59% of a 32k window. That admits one Epoch at each of the four
+# advertised Datacenters (the largest fixture Epoch is under 23 kB) and both
+# Epochs of GE.APE..BHZ (48 kB), and refuses the three of IV.ACER..HHZ (66 kB,
+# 23k tokens, 71% of the window in a single call).
+RESPONSE_MAX_BYTES = 54_000
 
 
 def _check_iso8601(value: str) -> str:
@@ -253,6 +263,15 @@ class Pagination(BaseModel):
     )
 
 
+def rendered_size(result: BaseModel) -> int:
+    """Bytes of the text block the SDK renders for a returned model, which is
+    the text the model reads. Mirrors mcp/server/mcpserver/utilities/
+    func_metadata.py (`pydantic_core.to_json(result, fallback=str, indent=2)`):
+    a size taken from `model_dump_json()` would leave out the indentation, which
+    is more than half of a nested response tree."""
+    return len(pydantic_core.to_json(result, fallback=str, indent=2))
+
+
 def paginate(epochs: list, limit: int, offset: int) -> tuple[list, Pagination]:
     """Slice an already sorted list and describe the slice. `has_more` is exact,
     not a heuristic, because the whole result set is in hand."""
@@ -321,12 +340,17 @@ class ResponseResult(BaseModel):
         default=None,
         description=(
             "ObsPy Inventory as a JSON tree (networks > stations > channels > response "
-            "with instrument sensitivity and stages); null when not found"
+            "with instrument sensitivity and stages); null when not found or when "
+            "omitted for size (see message)"
         ),
     )
     error: DatacenterError | None = Field(
         default=None, description="Set on upstream HTTP >= 400 or network failure"
     )
     message: str | None = Field(
-        default=None, description="Set when found is false and error is null"
+        default=None,
+        description=(
+            "Set when found is false and error is null, or when the inventory was "
+            "omitted for size, with the Epochs to narrow to"
+        ),
     )

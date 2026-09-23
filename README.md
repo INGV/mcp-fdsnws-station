@@ -187,6 +187,13 @@ wildcard or `--`), `starttime`, `endtime`, `datacenter`. Returns the full ObsPy
 StationXML's own; nothing is derived. Use a time window to select a single Epoch
 when the channel changed instrument over time.
 
+A result whose text block would exceed 54000 bytes (about 19k tokens on qwen3.8:27b,
+59% of a 32k context window) is returned with `found: true`, `inventory: null` and a
+`message` listing every channel Epoch as `NET.STA.LOC.CHA start to end`, so the caller
+can ask again with `starttime` and `endtime` inside one of them. One Epoch fits at each
+of the four advertised datacenters; a channel with several instrument changes, such as
+INGV `IV.ACER..HHZ` with three (66 kB), does not fit whole.
+
 ### Output fields and units
 
 Every query tool returns one object:
