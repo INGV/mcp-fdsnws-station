@@ -1,0 +1,240 @@
+{
+ "model": "qwen3.8:27b",
+ "date": "2026-09-23T14:18:10+00:00",
+ "ollama_version": "0.34.0",
+ "method": "prompt_eval_count of the SDK text block as one user message, nonce-prefixed, num_predict 1, server default num_ctx",
+ "fits": {
+  "network": {
+   "n": 3,
+   "bytes_per_token": 2.427,
+   "intercept_tokens": 76.4,
+   "r2": 0.99948,
+   "native_per_tiktoken": 1.253
+  },
+  "station": {
+   "n": 3,
+   "bytes_per_token": 2.166,
+   "intercept_tokens": 37.1,
+   "r2": 0.99995,
+   "native_per_tiktoken": 1.292
+  },
+  "channel": {
+   "n": 5,
+   "bytes_per_token": 2.158,
+   "intercept_tokens": 14.8,
+   "r2": 0.99987,
+   "native_per_tiktoken": 1.242
+  },
+  "response": {
+   "n": 5,
+   "bytes_per_token": 2.787,
+   "intercept_tokens": -340.7,
+   "r2": 0.99911,
+   "native_per_tiktoken": 1.608
+  }
+ },
+ "rows": [
+  {
+   "shape": "network",
+   "tool": "fdsnws_station_query_networks",
+   "arguments": {
+    "limit": 10
+   },
+   "bytes": 2695,
+   "prompt_eval_count": 1146,
+   "tiktoken_o200k": 887,
+   "truncated": false
+  },
+  {
+   "shape": "network",
+   "tool": "fdsnws_station_query_networks",
+   "arguments": {
+    "limit": 30
+   },
+   "bytes": 7231,
+   "prompt_eval_count": 3121,
+   "tiktoken_o200k": 2426,
+   "truncated": false
+  },
+  {
+   "shape": "network",
+   "tool": "fdsnws_station_query_networks",
+   "arguments": {
+    "limit": 66
+   },
+   "bytes": 14767,
+   "prompt_eval_count": 6136,
+   "tiktoken_o200k": 4865,
+   "truncated": false
+  },
+  {
+   "shape": "station",
+   "tool": "fdsnws_station_query_stations",
+   "arguments": {
+    "network": "IV",
+    "limit": 10
+   },
+   "bytes": 2813,
+   "prompt_eval_count": 1312,
+   "tiktoken_o200k": 993,
+   "truncated": false
+  },
+  {
+   "shape": "station",
+   "tool": "fdsnws_station_query_stations",
+   "arguments": {
+    "network": "IV",
+    "limit": 50
+   },
+   "bytes": 12875,
+   "prompt_eval_count": 6024,
+   "tiktoken_o200k": 4617,
+   "truncated": false
+  },
+  {
+   "shape": "station",
+   "tool": "fdsnws_station_query_stations",
+   "arguments": {
+    "network": "IV",
+    "limit": 100
+   },
+   "bytes": 25627,
+   "prompt_eval_count": 11850,
+   "tiktoken_o200k": 9152,
+   "truncated": false
+  },
+  {
+   "shape": "channel",
+   "tool": "fdsnws_station_query_channels",
+   "arguments": {
+    "network": "IV",
+    "limit": 5
+   },
+   "bytes": 3071,
+   "prompt_eval_count": 1407,
+   "tiktoken_o200k": 1107,
+   "truncated": false
+  },
+  {
+   "shape": "channel",
+   "tool": "fdsnws_station_query_channels",
+   "arguments": {
+    "network": "IV",
+    "limit": 20
+   },
+   "bytes": 10883,
+   "prompt_eval_count": 5036,
+   "tiktoken_o200k": 4013,
+   "truncated": false
+  },
+  {
+   "shape": "channel",
+   "tool": "fdsnws_station_query_channels",
+   "arguments": {
+    "network": "IV",
+    "limit": 40
+   },
+   "bytes": 21325,
+   "prompt_eval_count": 9867,
+   "tiktoken_o200k": 7925,
+   "truncated": false
+  },
+  {
+   "shape": "channel",
+   "tool": "fdsnws_station_query_channels",
+   "arguments": {
+    "network": "IV",
+    "limit": 60
+   },
+   "bytes": 31749,
+   "prompt_eval_count": 14703,
+   "tiktoken_o200k": 11792,
+   "truncated": false
+  },
+  {
+   "shape": "channel",
+   "tool": "fdsnws_station_query_channels",
+   "arguments": {
+    "network": "GE",
+    "station": "APE",
+    "datacenter": "GFZ"
+   },
+   "bytes": 15799,
+   "prompt_eval_count": 7435,
+   "tiktoken_o200k": 5883,
+   "truncated": false
+  },
+  {
+   "shape": "response",
+   "tool": "fdsnws_station_get_response",
+   "arguments": {
+    "network": "NL",
+    "station": "HGN",
+    "channel": "BHZ",
+    "starttime": "2024-01-01",
+    "endtime": "2024-01-02",
+    "datacenter": "ORFEUS"
+   },
+   "bytes": 6478,
+   "prompt_eval_count": 1926,
+   "tiktoken_o200k": 1543,
+   "truncated": false
+  },
+  {
+   "shape": "response",
+   "tool": "fdsnws_station_get_response",
+   "arguments": {
+    "network": "IV",
+    "station": "CAMP",
+    "channel": "HHZ",
+    "starttime": "2025-08-13"
+   },
+   "bytes": 15268,
+   "prompt_eval_count": 4883,
+   "tiktoken_o200k": 3371,
+   "truncated": false
+  },
+  {
+   "shape": "response",
+   "tool": "fdsnws_station_get_response",
+   "arguments": {
+    "network": "IV",
+    "station": "ACER",
+    "channel": "HHZ",
+    "starttime": "2022-01-01",
+    "endtime": "2022-01-02"
+   },
+   "bytes": 28430,
+   "prompt_eval_count": 10201,
+   "tiktoken_o200k": 6581,
+   "truncated": false
+  },
+  {
+   "shape": "response",
+   "tool": "fdsnws_station_get_response",
+   "arguments": {
+    "network": "GE",
+    "station": "APE",
+    "channel": "BHZ",
+    "datacenter": "GFZ"
+   },
+   "bytes": 47673,
+   "prompt_eval_count": 16958,
+   "tiktoken_o200k": 10579,
+   "truncated": false
+  },
+  {
+   "shape": "response",
+   "tool": "fdsnws_station_get_response",
+   "arguments": {
+    "network": "IV",
+    "station": "ACER",
+    "channel": "HHZ"
+   },
+   "bytes": 66157,
+   "prompt_eval_count": 23177,
+   "tiktoken_o200k": 14889,
+   "truncated": false
+  }
+ ]
+}

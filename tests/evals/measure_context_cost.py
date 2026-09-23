@@ -7,8 +7,10 @@ For each case the same Datacenter answer is expressed four ways: the raw
 objects this server returns as `structuredContent` (compact JSON), and the
 indented text block the SDK renders next to it, which is what an MCP client
 hands to the model. Tokens are counted with tiktoken's `o200k_base` encoding,
-one declared tokenizer: counts differ by a few percent between tokenizers and
-the ratios do not.
+one declared tokenizer, so the ratios between representations are comparable.
+Absolute counts are not a deployed model's: qwen3.8 counts 1.24 to 1.61 times
+as many tokens for the same text, depending on its shape (see
+`calibrate_density.py`).
 
 Live against the Datacenters, so the numbers carry a date. Run:
 

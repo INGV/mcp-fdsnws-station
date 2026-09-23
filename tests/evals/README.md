@@ -1,10 +1,13 @@
 # Evaluations
 
-Two scripts, both live and both opt-in. Neither runs in CI.
+Three scripts, all live and all opt-in. None runs in CI.
 
 - `measure_context_cost.py`: what one tool result costs a model, in bytes and
   tokens (tiktoken `o200k_base`), for the same Epochs as raw `format=text`,
   `columns`+`rows`, typed compact JSON and the SDK's indented text block.
+- `calibrate_density.py`: bytes per token of each result shape on a deployed model,
+  from Ollama's `prompt_eval_count`; tiktoken understates it, so this is what a size
+  limit for a context window is set from.
 - `run_evals.py` with `questions.json`: verifiable questions answered by a model
   through the four tools via an OpenAI-compatible endpoint with native tool calling
   (Ollama's `/v1` works). Tool calls run in-process through `MCPServer.call_tool`,
