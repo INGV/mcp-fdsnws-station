@@ -38,8 +38,16 @@ CODE_MAX_LENGTH = 1024
 # can be tens of megabytes of StationXML).
 EXACT_CODE_PATTERN = r"^[A-Za-z0-9-]+$"
 
+# The cap is set by the context window of the model reading the page, not by
+# the Datacenter. Measured on qwen3.8:27b (tests/evals/calibrate_density.py,
+# 2026-09-23), the SDK's indented text block costs 2.16 bytes per token for
+# channel Epochs; the widest seen (EarthScope, 549 bytes in a page) is 254
+# tokens, so 70 of them are about 18k tokens, 55% of a 32k window, leaving room
+# for the conversation. Station (~130 tokens) and network Epochs are cheaper,
+# so the same cap holds at every Level. The earlier cap of 500 channel Epochs
+# was about 122k tokens and overflowed a 32k window in an evaluation run.
 LIMIT_DEFAULT = 50
-LIMIT_MAX = 500
+LIMIT_MAX = 70
 
 
 def _check_iso8601(value: str) -> str:

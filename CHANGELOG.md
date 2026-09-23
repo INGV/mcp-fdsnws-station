@@ -1,6 +1,8 @@
 # Release Notes
 
-### Release 1.0.0-dev (2026-09-21)
+### Release 1.0.0-dev (2026-09-23)
+  - fix: cap `limit` at 70 instead of 500. The cap is what the tool schema tells a model it may ask for, and 500 channel Epochs are about 122k tokens on qwen3.8:27b: in the evaluation of 2026-09-21 gpt-oss asked for that page and overflowed a 32k context window. 70 is sized on the widest Level, channel, whose widest Epoch seen (EarthScope) costs 254 tokens in the SDK's indented text block, so a full page is about 18k tokens, 55% of a 32k window; station and network Epochs are cheaper, so one cap serves every Level
+  - test: `tests/evals/calibrate_density.py` measures bytes per token of each result shape on a deployed model through Ollama's `prompt_eval_count`, since tiktoken understates it: on qwen3.8:27b 2.16 bytes per token for channel pages, 2.17 station, 2.43 network, 2.79 for the response tree, 1.24 to 1.61 times the o200k count
   - test: `tests/evals/` with a context-cost measurement (bytes and tiktoken tokens per representation) and a task-based evaluation harness (13 verifiable questions, OpenAI-compatible endpoint, in-process tool calls); `evals` dependency group with `tiktoken`, never used by the server or CI
   - test: one response-level StationXML fixture per advertised Datacenter (GFZ, ORFEUS, EarthScope, alongside INGV), serialised offline through the production path, so the four-datacenter matrix is reproducible without network access at every level
   - fix: a non-FDSN exception on the response path (lxml `XMLSyntaxError` on a truncated or empty StationXML body, ObsPy `ValueError` on an unreachable host) is folded into the in-band `error` block, as the unparseable-text case already was; before, it reached the client as the SDK's hidden `Error executing tool`

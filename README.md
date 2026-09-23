@@ -241,7 +241,9 @@ them in a datacenter's WADL.
 For every query the server downloads the complete `format=text` response, sorts the
 Epochs by `network, station, location, channel, start_time` (whichever the level
 has), and returns the slice `[offset, offset + limit)`. `limit` defaults to 50 and is
-capped at 500; `offset` is 0-based. `pagination.total_count` is exact and
+capped at 70; `offset` is 0-based. The cap is sized for the model that reads the page:
+70 channel Epochs, the widest Level, cost about 18k tokens on qwen3.8:27b, 55% of a
+32k context window (measured with `tests/evals/calibrate_density.py`). `pagination.total_count` is exact and
 `has_more`/`next_offset` are derived from it, not guessed.
 
 Consequences: page boundaries do not depend on the datacenter's own order (INGV,

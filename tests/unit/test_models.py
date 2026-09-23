@@ -60,8 +60,8 @@ def test_iso_time_rejects_non_iso(value):
 
 
 def test_limit_and_offset_bounds():
-    assert TypeAdapter(Limit).validate_python(500) == 500
-    for bad in (0, 501):
+    assert TypeAdapter(Limit).validate_python(70) == 70
+    for bad in (0, 71):
         with pytest.raises(ValidationError):
             TypeAdapter(Limit).validate_python(bad)
     assert TypeAdapter(Offset).validate_python(0) == 0

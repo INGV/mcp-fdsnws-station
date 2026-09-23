@@ -31,7 +31,9 @@ from fdsnws_station_server import server
 ENC = tiktoken.get_encoding("o200k_base")
 
 # (label, tool, arguments): small, medium and large cardinalities per level,
-# on INGV, plus one channel case on another Datacenter.
+# on INGV, plus one channel case on another Datacenter. The tool functions are
+# called directly, so `limit` 500 bypasses the published cap on purpose: the
+# large cases show what the cap is there to prevent.
 NET, STA, CHA = (
     server.fdsnws_station_query_networks,
     server.fdsnws_station_query_stations,
@@ -44,7 +46,7 @@ CASES = [
     ("channel, IV.CAMP.HHZ", CHA, {"network": "IV", "station": "CAMP", "channel": "HHZ"}),
     ("channel, IV.ACER, all", CHA, {"network": "IV", "station": "ACER", "limit": 500}),
     ("channel, IV, default page", CHA, {"network": "IV"}),
-    ("channel, IV, max page", CHA, {"network": "IV", "limit": 500}),
+    ("channel, IV, 500 epochs", CHA, {"network": "IV", "limit": 500}),
     (
         "channel, GE.APE, all (GFZ)",
         CHA,

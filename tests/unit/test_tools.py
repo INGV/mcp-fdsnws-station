@@ -157,3 +157,17 @@ def test_get_response_folds_upstream_failure_and_not_found():
         result = run(server.fdsnws_station_get_response("IV", "ACER", "HHZ", location="--"))
     assert result.found is False and "Syntax Error" in result.error.message
     assert result.error.status == 400 and "location=--" in result.api_url
+
+
+def test_published_limit_maximum_is_the_calibrated_cap():
+    # The maximum is what the model is told it may ask for, so it is read back
+    # from the schema a client receives, not from the constant.
+    tools = {t.name: t for t in run(server.mcp.list_tools())}
+    for name in (
+        "fdsnws_station_query_networks",
+        "fdsnws_station_query_stations",
+        "fdsnws_station_query_channels",
+    ):
+        limit = tools[name].input_schema["properties"]["limit"]
+        assert (limit["minimum"], limit["maximum"], limit["default"]) == (1, 70, 50)
+        assert "max 70" in tools[name].description

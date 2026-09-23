@@ -29,6 +29,7 @@ from .client import (
 )
 from .models import (
     LIMIT_DEFAULT,
+    LIMIT_MAX,
     ChannelQueryResult,
     Code,
     DatacenterError,
@@ -98,7 +99,7 @@ _TIME_DOC = (
 )
 _PAGING_DOC = (
     f"Results are sorted and paginated by this server: limit (default {LIMIT_DEFAULT}, "
-    "max 500) and 0-based offset; pagination.total_count is exact and next_offset "
+    f"max {LIMIT_MAX}) and 0-based offset; pagination.total_count is exact and next_offset "
     "gives the next page. An upstream failure is reported in the error field."
 )
 _GEO_DOC = (
