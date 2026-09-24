@@ -10,7 +10,9 @@ Three layers:
   would: the legacy `initialize` handshake and the stateless 2026-07-28 envelope
   (`server/discover`, `tools/list`, `tools/call`). Offline: the only tool call
   made fails validation before any request leaves.
-- **`integration/`**: **live**, hits INGV, EARTHSCOPE, GFZ and ORFEUS. Marked
+- **`integration/`**: **live**, hits INGV, EARTHSCOPE, GFZ and ORFEUS, at two
+  layers: the client functions, and the four tools through `MCPServer.call_tool`
+  (paging, result models, in-band errors, the response-size limit). Marked
   `@pytest.mark.integration`, **excluded by default**, never run in CI.
 
 ## Run
