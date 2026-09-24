@@ -1,5 +1,8 @@
 # Release Notes
 
+### Release 1.1.0-dev (2026-09-24)
+  - . . .
+
 ### Release 1.0.0 (2026-09-24)
   - fix: bound `fdsnws_station_get_response` at 54000 bytes of text block. The tool has no page to shrink, since one exact channel returns every Epoch it ever had with its full stage list: INGV `IV.ACER..HHZ` without a time window is 66 kB, 23k tokens on qwen3.8:27b, 71% of a 32k window in one call. Over the limit the result keeps `found: true` and `channel_epochs_count`, omits `inventory`, and its `message` lists each Epoch's window so the caller can ask again for one of them. The size is measured on the indented text block the SDK renders, which is what the model reads; 54000 bytes is about 19k tokens at the measured 2.79 bytes per token of the response tree, and admits one Epoch at every advertised datacenter
   - fix: cap `limit` at 70 instead of 500. The cap is what the tool schema tells a model it may ask for, and 500 channel Epochs are about 122k tokens on qwen3.8:27b: in the evaluation of 2026-09-21 gpt-oss asked for that page and overflowed a 32k context window. 70 is sized on the widest Level, channel, whose widest Epoch seen (EarthScope) costs 254 tokens in the SDK's indented text block, so a full page is about 18k tokens, 55% of a 32k window; station and network Epochs are cheaper, so one cap serves every Level
