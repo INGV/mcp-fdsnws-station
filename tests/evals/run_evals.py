@@ -96,7 +96,7 @@ async def run_question(q: dict, endpoint: str, model: str, tools: list, timeout:
         try:
             reply = chat(endpoint, model, messages, tools, timeout)
         except requests.RequestException as e:
-            # A model that never finishes (gpt-oss has spun past 900 s on one
+            # A model that never finishes (one has spun past 900 s on a single
             # question) is a failed answer, not a reason to lose the other runs.
             # Only the exception type: its message names the host, which results
             # never record.

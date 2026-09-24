@@ -1,9 +1,9 @@
 """Scoring shared by run_evals.py and summarize.py.
 
 Answers are normalised before matching because models emit typographic
-variants of the same value: gpt-oss writes dates with U+2011 non-breaking
-hyphens and thousands with U+202F narrow no-break spaces, which are the right
-answer and must not be scored as missing.
+variants of the same value: dates with U+2011 non-breaking hyphens and
+thousands with U+202F narrow no-break spaces are the right answer and must not
+be scored as missing.
 """
 
 import re

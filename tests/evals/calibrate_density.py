@@ -2,11 +2,10 @@
 """Measure how many of a model's own tokens one byte of tool result costs.
 
 `measure_context_cost.py` counts tokens with tiktoken, one declared tokenizer.
-The models behind a deployment tokenize differently, and the evaluation runs
-say by how much: their reported prompt tokens grow about 1.4 times as fast as
-the tiktoken count on qwen3.8 and gemma4 (1.0 on gpt-oss, whose tokenizer is
-o200k). A size limit meant to keep a result inside a context window therefore
-has to be calibrated on the deployed model, not on tiktoken.
+The model behind a deployment tokenizes differently: on qwen3.8 the reported
+prompt tokens of the evaluation runs grow about 1.4 times as fast as the
+tiktoken count. A size limit meant to keep a result inside a context window
+therefore has to be calibrated on the deployed model, not on tiktoken.
 
 Method: build the exact text block the model reads (the SDK's indented JSON,
 obtained through `MCPServer.call_tool`), send it alone as a user message to
