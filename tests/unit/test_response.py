@@ -151,3 +151,73 @@ def test_get_response_unknown_status_is_carried():
         with pytest.raises(DatacenterRequestError) as ei:
             run(get_response("IV", "ACER", "*", "HHZ", None, None, "INGV"))
     assert ei.value.status == 502 and "Bad Gateway" in ei.value.message
+
+
+def test_get_response_malformed_stationxml_is_an_in_band_error():
+    """lxml raises XMLSyntaxError, not FDSNException, on a 200 with a truncated
+    body (a misconfigured private service, say); it must not escape as a crash."""
+    from lxml.etree import XMLSyntaxError
+
+    class FakeClient:
+        def __init__(self, base_url, timeout):
+            pass
+
+        def get_stations(self, **kwargs):
+            raise XMLSyntaxError("Premature end of data in tag Network line 1", None, 1, 99)
+
+    with patch.object(client, "Client", FakeClient):
+        with pytest.raises(DatacenterRequestError) as ei:
+            run(get_response("IV", "ACER", "*", "HHZ", None, None, "INGV"))
+    assert ei.value.status is None
+    assert "XMLSyntaxError" in ei.value.message and "Premature end" in ei.value.message
+
+
+def test_get_response_unreachable_host_is_an_in_band_error():
+    """ObsPy's Client() probes the base URL and raises a bare ValueError when
+    nothing answers; the tool result must still be a readable error."""
+
+    class FakeClient:
+        def __init__(self, base_url, timeout):
+            raise ValueError(f"The FDSN service base URL `{base_url}` is not a valid URL.")
+
+    with patch.object(client, "Client", FakeClient):
+        with pytest.raises(DatacenterRequestError) as ei:
+            run(get_response("IV", "ACER", "*", "HHZ", None, None, "INGV"))
+    assert ei.value.status is None
+    assert "ValueError" in ei.value.message and "not a valid URL" in ei.value.message
+
+
+# One narrow response-level document per advertised Datacenter, captured live on
+# 2026-09-21, so the serialisation of each Datacenter's real response structure is
+# exercised offline: the four spell units differently (`M/S`/`COUNTS`, `m/s`/`COUNTS`,
+# `m/s`/`counts`) and ship different stage counts, and nothing here normalises them.
+@pytest.mark.parametrize(
+    ("fixture", "code", "stages", "input_units", "output_units"),
+    [
+        ("ingv_iv_acer_hhz_response.xml", "IV.ACER..HHZ", 5, "m/s", "count"),
+        ("gfz_ge_ape_bhz_response.xml", "GE.APE..BHZ", 5, "M/S", "COUNTS"),
+        ("orfeus_nl_hgn_bhz_response.xml", "NL.HGN.02.BHZ", 2, "m/s", "COUNTS"),
+        ("earthscope_iu_anmo_bhz_response.xml", "IU.ANMO.00.BHZ", 3, "m/s", "counts"),
+    ],
+)
+def test_every_datacenter_response_serialises_verbatim(
+    fixture, code, stages, input_units, output_units
+):
+    tree = inventory_to_dict(read_inventory(f"tests/fixtures/{fixture}"))
+    json.dumps(tree)
+    net, sta, loc, cha = code.split(".")
+    channels = [
+        c
+        for n in tree["networks"]
+        if n["code"] == net
+        for s in n["stations"]
+        if s["code"] == sta
+        for c in s["channels"]
+        if c["code"] == cha and c["location_code"] == loc
+    ]
+    assert channels, f"{code} not in {fixture}"
+    resp = channels[0]["response"]
+    assert len(resp["response_stages"]) == stages
+    assert resp["instrument_sensitivity"]["input_units"] == input_units
+    assert resp["instrument_sensitivity"]["output_units"] == output_units
+    assert resp["instrument_sensitivity"]["value"] > 0

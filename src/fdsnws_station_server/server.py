@@ -2,12 +2,12 @@
 """FDSNWS Station MCP Server: FDSN station metadata from any fdsnws-station 1.1 Datacenter.
 
 Four tools, one per Level: three text-level queries with server-side paging
-(ADR-0001) and one response-level fetch through StationXML (ADR-0003). Every
-tool returns exactly one Pydantic model, so the SDK advertises a real
-`outputSchema` and an upstream failure travels in-band as `error`.
+and one response-level fetch through StationXML. Every tool returns exactly
+one Pydantic model, so the SDK advertises a real `outputSchema` and an
+upstream failure travels in-band as `error`.
 
-Transport is chosen by `MCP_TRANSPORT` (ADR-0002): stdio by default, Streamable
-HTTP without a proxy otherwise.
+Transport is chosen by `MCP_TRANSPORT`: stdio by default, Streamable HTTP
+without a proxy otherwise.
 """
 
 import logging
@@ -29,6 +29,8 @@ from .client import (
 )
 from .models import (
     LIMIT_DEFAULT,
+    LIMIT_MAX,
+    RESPONSE_MAX_BYTES,
     ChannelQueryResult,
     Code,
     DatacenterError,
@@ -44,6 +46,7 @@ from .models import (
     StationQueryResult,
     check_geographic_selection,
     paginate,
+    rendered_size,
 )
 
 logger = logging.getLogger(__name__)
@@ -98,7 +101,7 @@ _TIME_DOC = (
 )
 _PAGING_DOC = (
     f"Results are sorted and paginated by this server: limit (default {LIMIT_DEFAULT}, "
-    "max 500) and 0-based offset; pagination.total_count is exact and next_offset "
+    f"max {LIMIT_MAX}) and 0-based offset; pagination.total_count is exact and next_offset "
     "gives the next page. An upstream failure is reported in the error field."
 )
 _GEO_DOC = (
@@ -371,7 +374,9 @@ async def fdsnws_station_query_channels(
         "Inventory, one entry per channel Epoch. network, station and channel must be "
         "exact codes (no list, no wildcard); location defaults to * and may be a "
         "wildcard or -- for blank. Narrow with starttime/endtime (ISO 8601 UTC) to a "
-        "single Epoch when the channel changed instrument over time. " + _DATACENTER_DOC
+        "single Epoch when the channel changed instrument over time. A result over "
+        f"{RESPONSE_MAX_BYTES} bytes omits the inventory and lists the Epochs to narrow "
+        "to. " + _DATACENTER_DOC
     ),
     annotations=_ANNOTATIONS,
 )
@@ -421,12 +426,41 @@ async def fdsnws_station_get_response(
                 "or widen the time window."
             ),
         )
-    return ResponseResult(
+    result = ResponseResult(
         **common,
         api_url=api_url,
         found=True,
         channel_epochs_count=count,
         inventory=inventory_to_dict(inventory),
+    )
+    size = rendered_size(result)
+    if size <= RESPONSE_MAX_BYTES:
+        return result
+    # Too large for the model's context: say so in-band and hand back the Epoch
+    # windows, which is what the caller needs to ask again for one of them.
+    logger.info("response omitted: %d bytes over %d", size, RESPONSE_MAX_BYTES)
+    return result.model_copy(
+        update={"inventory": None, "message": _over_limit_message(inventory, count, size)}
+    )
+
+
+def _over_limit_message(inventory, count: int, size: int) -> str:
+    head = f"over the {RESPONSE_MAX_BYTES}-byte limit of one result, so inventory is omitted"
+    if count == 1:
+        return (
+            f"The response of this single channel Epoch is {size} bytes, {head}. It cannot "
+            "be narrowed further; fdsnws_station_query_channels gives its total sensitivity."
+        )
+    windows = "; ".join(
+        f"{net.code}.{sta.code}.{cha.location_code}.{cha.code} "
+        f"{cha.start_date.isoformat()} to {cha.end_date.isoformat() if cha.end_date else 'open'}"
+        for net in inventory
+        for sta in net
+        for cha in sta
+    )
+    return (
+        f"The response of {count} channel Epochs is {size} bytes, {head}. Call again with "
+        f"starttime and endtime both inside one of these Epochs: {windows}."
     )
 
 

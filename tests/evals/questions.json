@@ -1,0 +1,117 @@
+[
+ {
+  "id": "Q01",
+  "question": "Which stations of network IV lie within 30 km of L'Aquila (latitude 42.35, longitude 13.40)? List their station codes.",
+  "expect_all": [
+   "\\bAQU\\b",
+   "\\bCAMP\\b",
+   "\\bFAGN\\b",
+   "\\bFIAM\\b",
+   "\\bGIGS\\b",
+   "\\bRM33\\b",
+   "\\bT0104\\b"
+  ]
+ },
+ {
+  "id": "Q02",
+  "question": "How many channel epochs does INGV publish for network IV at channel level in total?",
+  "expect_all": [
+   "7,?511"
+  ]
+ },
+ {
+  "id": "Q03",
+  "question": "Which sensor currently records the HHZ channel of station IV.CAMP?",
+  "expect_all": [
+   "Trillium ?Compact"
+  ]
+ },
+ {
+  "id": "Q04",
+  "question": "What was the total sensitivity (scale) of the HHZ channel of station IV.CAMP on 1 January 2020, and at which frequency is it valid?",
+  "expect_all": [
+   "7\\.009?12\\s*[x\u00d7*]?\\s*10\\^?8|7\\.009?12e\\+?0?8|700[, ]?912[, ]?000",
+   "21\\.2[45]"
+  ]
+ },
+ {
+  "id": "Q05",
+  "question": "On which date did station IV.CAMP last change the sensor of its HHZ channel?",
+  "expect_all": [
+   "2025-08-12|12 August 2025|August 12,? 2025"
+  ]
+ },
+ {
+  "id": "Q06",
+  "question": "What is the sample rate of the HHZ channel of station IV.FIAM?",
+  "expect_all": [
+   "\\b100\\b"
+  ]
+ },
+ {
+  "id": "Q07",
+  "question": "Using the instrument response, give the instrument sensitivity value and its input and output units for the current HHZ channel of station IV.CAMP.",
+  "expect_all": [
+   "2\\.3907\\s*[x\u00d7*]?\\s*10\\^?8|2\\.3907e\\+?0?8|239[, ]?070[, ]?000",
+   "m/s",
+   "count"
+  ]
+ },
+ {
+  "id": "Q08",
+  "question": "How many station epochs does INGV list for network IV?",
+  "expect_all": [
+   "\\b561\\b"
+  ]
+ },
+ {
+  "id": "Q09",
+  "question": "At the GFZ datacenter, which stations of network GE lie within 150 km of Naxos (latitude 37.07, longitude 25.52)?",
+  "expect_all": [
+   "\\bAPE\\b",
+   "\\bSANT\\b",
+   "\\bTHERA\\b"
+  ]
+ },
+ {
+  "id": "Q10",
+  "question": "Does the GFZ datacenter serve any station metadata for network IV?",
+  "expect_all": [
+   "\\bno\\b|\\bnot\\b|\\bnone\\b|\\bdoes not\\b|\\bzero\\b|\\bno data\\b"
+  ],
+  "expect_none": [
+   "^\\s*yes\\b"
+  ]
+ },
+ {
+  "id": "Q11",
+  "question": "List the codes of all stations, of any network, within 30 km of L'Aquila (latitude 42.35, longitude 13.40). Include every station, not only the first page.",
+  "expect_all": [
+   "\\bRM33\\b",
+   "\\bT0104\\b",
+   "\\bAQU\\b",
+   "\\bCP01\\b",
+   "\\bCP02\\b",
+   "\\bCP04\\b"
+  ],
+  "needs_paging": true
+ },
+ {
+  "id": "Q12",
+  "question": "What are the site name and the elevation of station IV.CAMP?",
+  "expect_all": [
+   "CAMPOTOSTO",
+   "1,?283"
+  ]
+ },
+ {
+  "id": "Q13",
+  "question": "Which sensor was installed on the HHZ channel of station IV.FIAM between 2010 and 2015?",
+  "expect_all": [
+   "TRILLIUM-?120S"
+  ],
+  "expect_none": [
+   "TRILLIUM-?40S\\b(?!.*120S)"
+  ]
+ }
+]

@@ -1,19 +1,21 @@
 """Datacenter access: name registry, `format=text` path, StationXML path.
 
-Two paths, chosen by the level requested (design decision 12):
+Two paths, chosen by the level requested:
 
 - network, station and channel levels go through `format=text` with `requests`.
   The whole response is parsed into Epoch models and sorted here, because the
   specification has no `limit`/`offset`/`orderby` and a network at channel level
-  is thousands of lines (ADR-0001). ObsPy is bypassed on this path: its client
-  validates parameters against each Datacenter's WADL, which is exactly the
-  per-Datacenter behaviour ADR-0005 forbids.
+  is thousands of lines. ObsPy is bypassed on this path: its client validates
+  parameters against each Datacenter's WADL, and this server has no
+  per-Datacenter behaviour by design: the Datacenter decides, its body is
+  returned verbatim.
 - response level goes through ObsPy `Client(base_url=...)`, which is the only
   StationXML parser worth having, and the resulting Inventory is serialised to a
   JSON tree.
 
 Nothing in here is Datacenter-specific. A Datacenter is always a name resolved
-through `resolve_datacenter` (ADR-0006), never a URL chosen by the caller.
+through `resolve_datacenter`, never a URL chosen by the caller: in HTTP mode a
+caller-supplied URL would turn this server into an open proxy.
 """
 
 import asyncio
@@ -37,7 +39,8 @@ DEFAULT_TIMEOUT = 45.0
 
 # Kilometres per degree of great-circle arc on a spherical Earth of mean radius
 # 6371 km (2 * pi * 6371 / 360). The specification takes radii in degrees;
-# callers reason in kilometres (ADR-0004). The spherical approximation is off by
+# callers reason in kilometres, and converting here keeps the query portable
+# across Datacenters. The spherical approximation is off by
 # well under a kilometre at the scale of a station search.
 KM_PER_DEGREE = 111.19
 
@@ -68,7 +71,7 @@ class DatacenterRequestError(Exception):
         self.query = query or {}
 
 
-# --- Datacenter registry (ADR-0006) -------------------------------------------
+# --- Datacenter registry: names only, never caller URLs -----------------------
 
 
 def parse_datacenters(raw: str) -> dict[str, str]:
@@ -266,7 +269,7 @@ async def get_response(
     is an empty Inventory, any other FDSN failure raises DatacenterRequestError
     with ObsPy's message, which embeds the Datacenter's body, and the HTTP
     status when ObsPy knows it. `Client(base_url=...)` reads the WADL, so a
-    private Datacenter must be a full implementation (ADR-0006). Times are
+    private Datacenter must be a full implementation, WADL included. Times are
     handed to ObsPy as the strings the caller gave, so `api_url` shows them
     verbatim.
     """
@@ -304,6 +307,17 @@ async def get_response(
         if status == 404:
             return Inventory(), api_url
         raise DatacenterRequestError(str(e).strip(), status=status, api_url=api_url) from e
+    except Exception as e:  # noqa: BLE001
+        # Not everything ObsPy raises is an FDSNException: lxml raises
+        # XMLSyntaxError on a 200 whose body is truncated or empty StationXML,
+        # and Client() raises ValueError when the host does not answer at all.
+        # Only ObsPy runs inside fetch(), so a broad catch here masks none of
+        # our own bugs, and it turns a hidden "Error executing tool" into the
+        # same in-band error the text path reports for an unparseable body.
+        raise DatacenterRequestError(
+            f"Unparseable or unreachable Datacenter: {type(e).__name__}: {e}".strip(),
+            api_url=api_url,
+        ) from e
     return inventory, api_url
 
 

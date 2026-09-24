@@ -16,12 +16,19 @@ from fdsnws_station_server.models import (
 )
 
 
-@pytest.mark.parametrize("value", ["IV", "IV,GE", "I*", "H??", "--", "A-B", "a" * 64])
+@pytest.mark.parametrize("value", ["IV", "IV,GE", "I*", "H??", "--", "A-B", "a" * 1024])
 def test_code_accepts_specification_forms(value):
     assert TypeAdapter(Code).validate_python(value) == value
 
 
-@pytest.mark.parametrize("value", ["", "IV GE", "IV;GE", "a" * 65, "IV|GE", "x/y"])
+def test_code_accepts_a_long_station_list():
+    # Regression: 21 codes (102 characters) were rejected by the old 64 bound
+    # before the request ever reached the datacenter, which accepts far more.
+    value = ",".join(["ESCV", "EPZF", "ECHR", "ESVO", "EMSG", "ESML", "EMCO"] * 3)
+    assert TypeAdapter(Code).validate_python(value) == value
+
+
+@pytest.mark.parametrize("value", ["", "IV GE", "IV;GE", "a" * 1025, "IV|GE", "x/y"])
 def test_code_rejects_unsafe_forms(value):
     with pytest.raises(ValidationError):
         TypeAdapter(Code).validate_python(value)
@@ -53,8 +60,8 @@ def test_iso_time_rejects_non_iso(value):
 
 
 def test_limit_and_offset_bounds():
-    assert TypeAdapter(Limit).validate_python(500) == 500
-    for bad in (0, 501):
+    assert TypeAdapter(Limit).validate_python(70) == 70
+    for bad in (0, 71):
         with pytest.raises(ValidationError):
             TypeAdapter(Limit).validate_python(bad)
     assert TypeAdapter(Offset).validate_python(0) == 0

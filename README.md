@@ -187,6 +187,13 @@ wildcard or `--`), `starttime`, `endtime`, `datacenter`. Returns the full ObsPy
 StationXML's own; nothing is derived. Use a time window to select a single Epoch
 when the channel changed instrument over time.
 
+A result whose text block would exceed 54000 bytes (about 19k tokens on qwen3.8:27b,
+59% of a 32k context window) is returned with `found: true`, `inventory: null` and a
+`message` listing every channel Epoch as `NET.STA.LOC.CHA start to end`, so the caller
+can ask again with `starttime` and `endtime` inside one of them. One Epoch fits at each
+of the four advertised datacenters; a channel with several instrument changes, such as
+INGV `IV.ACER..HHZ` with three (66 kB), does not fit whole.
+
 ### Output fields and units
 
 Every query tool returns one object:
@@ -223,9 +230,9 @@ found), `error` and `message`.
 
 ### Errors and empty results
 
-An upstream failure (HTTP 4xx/5xx, a network error, or a 200 whose body is not the
-FDSN text format, such as an HTML page from a misconfigured private service) is
-**not** a protocol error: the tool result carries `error: {status, message}` with
+An upstream failure (HTTP 4xx/5xx, a network error, an unreachable host, or a 200
+whose body is not the FDSN text format or not well-formed StationXML, such as an
+HTML page from a misconfigured private service) is **not** a protocol error: the tool result carries `error: {status, message}` with
 the datacenter's response body verbatim, and `pagination` is `null`. A query that matches nothing is not an
 error either: `total_count` is `0` and `message` says so. Invalid input (a wildcard
 in `get_response`, a bounding box together with a radial search, a malformed time,
@@ -241,7 +248,9 @@ them in a datacenter's WADL.
 For every query the server downloads the complete `format=text` response, sorts the
 Epochs by `network, station, location, channel, start_time` (whichever the level
 has), and returns the slice `[offset, offset + limit)`. `limit` defaults to 50 and is
-capped at 500; `offset` is 0-based. `pagination.total_count` is exact and
+capped at 70; `offset` is 0-based. The cap is sized for the model that reads the page:
+70 channel Epochs, the widest Level, cost about 18k tokens on qwen3.8:27b, 55% of a
+32k context window (measured with `tests/evals/calibrate_density.py`). `pagination.total_count` is exact and
 `has_more`/`next_offset` are derived from it, not guessed.
 
 Consequences: page boundaries do not depend on the datacenter's own order (INGV,

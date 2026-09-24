@@ -6,10 +6,11 @@ from unittest.mock import patch
 
 import pytest
 from mcp.server.mcpserver.exceptions import ToolError
+from obspy import read_inventory
 
 from fdsnws_station_server import client, server
 from fdsnws_station_server.client import sort_epochs
-from fdsnws_station_server.models import NetworkEpoch
+from fdsnws_station_server.models import NetworkEpoch, ResponseResult, rendered_size
 
 
 class FakeResponse:
@@ -157,3 +158,97 @@ def test_get_response_folds_upstream_failure_and_not_found():
         result = run(server.fdsnws_station_get_response("IV", "ACER", "HHZ", location="--"))
     assert result.found is False and "Syntax Error" in result.error.message
     assert result.error.status == 400 and "location=--" in result.api_url
+
+
+def test_published_limit_maximum_is_the_calibrated_cap():
+    # The maximum is what the model is told it may ask for, so it is read back
+    # from the schema a client receives, not from the constant.
+    tools = {t.name: t for t in run(server.mcp.list_tools())}
+    for name in (
+        "fdsnws_station_query_networks",
+        "fdsnws_station_query_stations",
+        "fdsnws_station_query_channels",
+    ):
+        limit = tools[name].input_schema["properties"]["limit"]
+        assert (limit["minimum"], limit["maximum"], limit["default"]) == (1, 70, 50)
+        assert "max 70" in tools[name].description
+
+
+def _serving(inventory):
+    """A stand-in ObsPy Client whose every response request returns `inventory`."""
+
+    class Fake:
+        def __init__(self, base_url, timeout):
+            pass
+
+        def get_stations(self, **kwargs):
+            return inventory
+
+    return Fake
+
+
+def test_get_response_over_the_size_limit_omits_inventory_and_lists_epochs():
+    # IV.ACER..HHZ with no window: three channel Epochs, 66 kB of text block,
+    # about 23k tokens on qwen3.8, 71% of a 32k window for one call.
+    inv = read_inventory("tests/fixtures/ingv_iv_acer_hhz_response.xml")
+    with patch.object(client, "Client", _serving(inv)):
+        result = run(server.fdsnws_station_get_response("IV", "ACER", "HHZ"))
+    assert result.found is True and result.inventory is None and result.error is None
+    assert result.channel_epochs_count == 3
+    assert "over the 54000-byte limit" in result.message
+    assert "starttime and endtime" in result.message
+    for window in (
+        "IV.ACER..HHZ 2007-07-05T12:00:00 to 2014-05-08T11:42:00",
+        "IV.ACER..HHZ 2014-05-08T11:42:00 to 2021-09-08T19:00:00",
+        "IV.ACER..HHZ 2021-09-08T19:00:00 to open",
+    ):
+        assert window in result.message
+
+
+def _single_epochs():
+    """Every channel Epoch of the four response fixtures, one inventory each."""
+    for name in (
+        "ingv_iv_acer_hhz_response.xml",
+        "gfz_ge_ape_bhz_response.xml",
+        "orfeus_nl_hgn_bhz_response.xml",
+        "earthscope_iu_anmo_bhz_response.xml",
+    ):
+        inv = read_inventory(f"tests/fixtures/{name}")
+        for cha in inv[0][0]:
+            yield f"{name}@{cha.start_date.date}", inv.select(time=cha.start_date + 86400)
+
+
+@pytest.mark.parametrize(("label", "inv"), list(_single_epochs()))
+def test_one_epoch_at_every_datacenter_fits_the_limit(label, inv):
+    assert sum(len(s.channels) for n in inv for s in n) == 1, label
+    with patch.object(client, "Client", _serving(inv)):
+        result = run(server.fdsnws_station_get_response("XX", "YYY", "HHZ"))
+    assert result.inventory is not None and result.message is None, label
+
+
+def test_a_single_epoch_over_the_limit_says_it_cannot_be_narrowed():
+    inv = read_inventory("tests/fixtures/gfz_ge_ape_bhz_response.xml")
+    with (
+        patch.object(client, "Client", _serving(inv)),
+        patch.object(server, "RESPONSE_MAX_BYTES", 1000),
+    ):
+        result = run(server.fdsnws_station_get_response("GE", "APE", "BHZ", datacenter="GFZ"))
+    assert result.found is True and result.inventory is None
+    assert "single channel Epoch" in result.message
+    assert "fdsnws_station_query_channels" in result.message
+
+
+def test_the_limit_is_measured_on_the_text_block_the_model_reads():
+    # The SDK renders the returned model as indented JSON; the guard must count
+    # the same bytes, not the compact form, which is less than half for a tree.
+    inv = read_inventory("tests/fixtures/gfz_ge_ape_bhz_response.xml")
+    with patch.object(client, "Client", _serving(inv)):
+        wire = run(
+            server.mcp.call_tool(
+                "fdsnws_station_get_response",
+                {"network": "GE", "station": "APE", "channel": "BHZ", "datacenter": "GFZ"},
+            )
+        )
+    text = "".join(c.text for c in wire.content if getattr(c, "type", "") == "text")
+    model = ResponseResult.model_validate(wire.structured_content)
+    assert rendered_size(model) == len(text.encode())

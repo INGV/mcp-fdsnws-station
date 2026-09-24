@@ -1,4 +1,4 @@
-"""Datacenter registry: FDSN_DATACENTERS parsing, shadowing, defaults (ADR-0006)."""
+"""Datacenter registry: FDSN_DATACENTERS parsing, shadowing, defaults."""
 
 import pytest
 

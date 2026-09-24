@@ -19,23 +19,45 @@ the schema is the only place a client can read it from.
 from datetime import datetime
 from typing import Annotated, ClassVar, Literal
 
+import pydantic_core
 from pydantic import AfterValidator, BaseModel, Field
 
 # --- Input constraints -------------------------------------------------------
 
 # Everything the specification allows in a code selection: comma lists, `*` and
-# `?` wildcards, and `--` for a blank Location code. The bound also keeps the
-# value safe to interpolate into the upstream query string.
+# `?` wildcards, and `--` for a blank Location code. The pattern is what keeps
+# the value safe to interpolate into the upstream query string; the bound only
+# keeps the GET URL short. Measured live on INGV (2026-09-17): the request line
+# is capped at 8 KiB by both the backend (431) and nginx (414), so about 1580
+# station codes fit. 1024 per code field leaves the four fields plus every
+# other parameter under that cap and covers about 200 stations per call.
 CODE_PATTERN = r"^[A-Za-z0-9*?,-]+$"
-CODE_MAX_LENGTH = 64
+CODE_MAX_LENGTH = 1024
 
 # Exact codes for `get_response`: one Network, one Station, one Channel, no list
 # and no wildcard, so the returned Inventory is bounded (a `*` at response level
 # can be tens of megabytes of StationXML).
 EXACT_CODE_PATTERN = r"^[A-Za-z0-9-]+$"
 
+# The cap is set by the context window of the model reading the page, not by
+# the Datacenter. Measured on qwen3.8:27b (tests/evals/calibrate_density.py,
+# 2026-09-23), the SDK's indented text block costs 2.16 bytes per token for
+# channel Epochs; the widest seen (EarthScope, 549 bytes in a page) is 254
+# tokens, so 70 of them are about 18k tokens, 55% of a 32k window, leaving room
+# for the conversation. Station (~130 tokens) and network Epochs are cheaper,
+# so the same cap holds at every Level. The earlier cap of 500 channel Epochs
+# was about 122k tokens and overflowed a 32k window in an evaluation run.
 LIMIT_DEFAULT = 50
-LIMIT_MAX = 500
+LIMIT_MAX = 70
+
+# `get_response` has no page to shrink: one exact channel returns every Epoch it
+# ever had, each with its full stage list. The response tree tokenizes at 2.79
+# bytes per token on qwen3.8:27b (same calibration), so 54000 bytes is about 19k
+# tokens, 59% of a 32k window. That admits one Epoch at each of the four
+# advertised Datacenters (the largest fixture Epoch is under 23 kB) and both
+# Epochs of GE.APE..BHZ (48 kB), and refuses the three of IV.ACER..HHZ (66 kB,
+# 23k tokens, 71% of the window in a single call).
+RESPONSE_MAX_BYTES = 54_000
 
 
 def _check_iso8601(value: str) -> str:
@@ -225,7 +247,11 @@ class ChannelEpoch(BaseModel):
 
 
 class Pagination(BaseModel):
-    """Client-side paging over the complete, sorted result (ADR-0001)."""
+    """Client-side paging over the complete, sorted result.
+
+    The specification has no `limit`/`offset`/`orderby`, so the page is cut
+    here after the whole response has been downloaded and sorted.
+    """
 
     total_count: int = Field(description="Epochs matched by the Datacenter, before slicing")
     returned_count: int = Field(description="Epochs in this page")
@@ -235,6 +261,15 @@ class Pagination(BaseModel):
     next_offset: int | None = Field(
         default=None, description="offset to request the next page; null on the last page"
     )
+
+
+def rendered_size(result: BaseModel) -> int:
+    """Bytes of the text block the SDK renders for a returned model, which is
+    the text the model reads. Mirrors mcp/server/mcpserver/utilities/
+    func_metadata.py (`pydantic_core.to_json(result, fallback=str, indent=2)`):
+    a size taken from `model_dump_json()` would leave out the indentation, which
+    is more than half of a nested response tree."""
+    return len(pydantic_core.to_json(result, fallback=str, indent=2))
 
 
 def paginate(epochs: list, limit: int, offset: int) -> tuple[list, Pagination]:
@@ -305,12 +340,17 @@ class ResponseResult(BaseModel):
         default=None,
         description=(
             "ObsPy Inventory as a JSON tree (networks > stations > channels > response "
-            "with instrument sensitivity and stages); null when not found"
+            "with instrument sensitivity and stages); null when not found or when "
+            "omitted for size (see message)"
         ),
     )
     error: DatacenterError | None = Field(
         default=None, description="Set on upstream HTTP >= 400 or network failure"
     )
     message: str | None = Field(
-        default=None, description="Set when found is false and error is null"
+        default=None,
+        description=(
+            "Set when found is false and error is null, or when the inventory was "
+            "omitted for size, with the Epochs to narrow to"
+        ),
     )

@@ -28,3 +28,6 @@ docs/
 prompts/
 CLAUDE.md
 CONTEXT.md
+
+# SoftwareX manuscript, written locally (not distributed with the code)
+paper/
