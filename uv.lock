@@ -1138,7 +1138,7 @@ wheels = [
 
 [[package]]
 name = "mcp-fdsnws-station-server"
-version = "1.0.0.dev0"
+version = "1.1.0.dev0"
 source = { editable = "." }
 dependencies = [
     { name = "mcp" },
