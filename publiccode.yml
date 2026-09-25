@@ -7,7 +7,7 @@ name: "INGV - FDSNWS Station MCP Server"
 releaseDate: 2026-09-26
 url: "https://github.com/INGV/mcp-fdsnws-station"
 landingURL: "https://github.com/INGV/mcp-fdsnws-station"
-softwareVersion: v1.1.0
+softwareVersion: v1.2.0-dev
 developmentStatus: development
 softwareType: standalone/backend
 platforms:
