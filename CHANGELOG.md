@@ -1,6 +1,6 @@
 # Release Notes
 
-### Release 1.1.0-dev (2026-09-24)
+### Release 1.1.0 (2026-09-26)
   - test: drive the four tools live through `MCPServer.call_tool` on INGV, EARTHSCOPE, GFZ and ORFEUS, asserting on the structured result validated against each tool's result model: the three query tools with typed, sorted Epochs; `fdsnws_station_get_response` returning the tree for one Epoch (window 2024-01-01/02, as the captured fixtures); a second page disjoint from the first with the same `total_count`; no data as `message`; radius in km sent in degrees; the configured alias. On INGV: the whole `IV` network at channel level as one page of an exact total over 5000; the inverted window as an in-band 400 whose body matches the direct request; `IV.ACER..HHZ` without a window over `RESPONSE_MAX_BYTES`, with every Epoch window listed. The client-level live tests stay. Found live: without a window `IU.ANMO.00.BHZ` is nine Epochs and 110 kB, also over the limit; `ZZ` is a temporary-network code served at network level by EarthScope and GFZ, so the no-data case queries `ZZ.ZZZZ` at station level
 
 ### Release 1.0.0 (2026-09-24)
