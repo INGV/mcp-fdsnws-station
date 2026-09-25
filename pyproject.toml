@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "mcp-fdsnws-station-server"
-version = "1.0.0"
+version = "1.1.0"
 description = "MCP server for the FDSN fdsnws-station 1.1 service (multi-datacenter)"
 readme = "README.md"
 license = "AGPL-3.0-or-later"
